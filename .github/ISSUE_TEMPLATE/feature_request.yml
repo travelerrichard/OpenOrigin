@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest an idea for OpenOrigin
+labels: ["type:feature"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What do you want to see added or changed?
+      placeholder: Short, crisp summary
+      value: ""
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Why is this useful? Who benefits?
+  - type: textarea
+    id: approach
+    attributes:
+      label: Possible approach
+      description: Optional implementation notes or references.

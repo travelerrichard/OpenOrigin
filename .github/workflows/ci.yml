@@ -1,0 +1,36 @@
+name: ci
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main"]
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install jsonschema
+      - name: Lint (placeholder)
+        run: echo "TODO: add linting (e.g., ruff, black)"; exit 0
+      - name: Basic schema check (if files present)
+        run: |
+          if [ -f originals-etl/schema/manifest.schema.json ] && [ -f originals-etl/samples/example_manifest.json ]; then             python - <<'PY'
+import json
+from jsonschema import validate
+m=json.load(open('originals-etl/samples/example_manifest.json'))
+s=json.load(open('originals-etl/schema/manifest.schema.json'))
+validate(m,s)
+print('Schema validation OK')
+PY
+          else
+            echo 'No schema files found; skipping.'
+          fi

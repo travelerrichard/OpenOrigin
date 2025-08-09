@@ -1,0 +1,11 @@
+# Default owners for everything
+*       @your-org/maintainers
+
+# CLI ownership
+/cli/    @your-org/cli-owners
+
+# Docs & site
+/docs/   @your-org/docs-owners
+
+# GitHub pages & verifier
+/docs/verify/  @your-org/docs-owners
