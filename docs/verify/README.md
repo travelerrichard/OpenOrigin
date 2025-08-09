@@ -9,4 +9,6 @@ This repository includes a **Download & Verify** page you can host anywhere. It 
 4) (Optional) Paste an expected package SHA-256 from a transparency log.
 5) Read the results: structure, hashes, signature, and expected-hash checks.
 
+
+
 > Privacy note: verification and hashing occur entirely on your device via WebCrypto. Nothing is transmitted.

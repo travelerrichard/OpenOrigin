@@ -1,0 +1,10 @@
+{
+  "name": "redact",
+  "description": "Remove GPS, device IDs, CreatorTool; coarsen CreateDate.",
+  "metadata_policy": "safe_defaults",
+  "security_layers": {
+    "sign_official": false,
+    "sign_user": false,
+    "log_hash": false
+  }
+}

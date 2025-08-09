@@ -1,0 +1,10 @@
+{
+  "name": "preserve_signed",
+  "description": "Keep all metadata. Enable official signing.",
+  "metadata_policy": "keep_all",
+  "security_layers": {
+    "sign_official": true,
+    "sign_user": false,
+    "log_hash": false
+  }
+}

@@ -22,16 +22,20 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          pip install jsonschema
+          pip install jsonschema ruff mypy
 
-      # --- Validate manifest(s) against schemas/manifest.schema.json (if present) ---
+      - name: Lint (ruff) & type check (mypy) - non-fatal for now
+        continue-on-error: true
+        run: |
+          ruff check originals_etl.py || true
+          mypy --ignore-missing-imports originals_etl.py || true
+
       - name: Validate manifests (schema)
         shell: bash
         run: |
           set -euo pipefail
           if [ -f schemas/manifest.schema.json ]; then
             echo "[ci] Found schemas/manifest.schema.json"
-            # Validate any sample manifests you keep under ./samples/ (adjust if needed)
             if ls samples/*manifest*.json >/dev/null 2>&1; then
               for f in samples/*manifest*.json; do
                 echo "[ci] Validating $f"
@@ -54,12 +58,9 @@ PY
               echo "[ci] No sample manifests under ./samples; skipping manifest validation."
             fi
           else
-            echo "[ci] schemas/manifest.schema.json not found; skipping." 
+            echo "[ci] schemas/manifest.schema.json not found; skipping."
           fi
 
-      # --- Optionally validate any "redaction rule" JSONs that use remove_tags ---
-      # This is safe with your current profiles (preserve/redact) because we only validate files
-      # that *actually* contain a 'remove_tags' key, matching redaction_profile.schema.json.
       - name: Validate redaction-rule JSONs (conditional)
         shell: bash
         run: |
@@ -71,10 +72,8 @@ PY
                 if python - <<'PY'
 import json,sys
 try:
-  d=json.load(open(sys.argv[1]))
-  sys.exit(0 if 'remove_tags' in d else 2)
-except Exception:
-  sys.exit(3)
+  d=json.load(open(sys.argv[1])); sys.exit(0 if 'remove_tags' in d else 2)
+except Exception: sys.exit(3)
 PY
                 "$f"; then
                   echo "[ci] Validating redaction rules in $f"
@@ -93,7 +92,7 @@ print("OK:", sys.argv[1])
 PY
                   "$f"
                 else
-                  echo "[ci] $f does not define 'remove_tags' — skipping (not a redaction-rules file)."
+                  echo "[ci] $f lacks 'remove_tags' — skipping."
                 fi
               done
             else
@@ -102,8 +101,3 @@ PY
           else
             echo "[ci] schemas/redaction_profile.schema.json not found; skipping."
           fi
-
-      - name: Lint (placeholder)
-        run: |
-          echo "TODO: add ruff/black"
-          exit 0

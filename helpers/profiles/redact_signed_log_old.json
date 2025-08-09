@@ -1,0 +1,10 @@
+{
+  "name": "redact_signed_log",
+  "description": "Same as redact_signed. Also log hash to transparency log.",
+  "metadata_policy": "safe_defaults",
+  "security_layers": {
+    "sign_official": true,
+    "sign_user": false,
+    "log_hash": true
+  }
+}
