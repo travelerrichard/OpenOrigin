@@ -36,16 +36,25 @@ import time
 from pathlib import Path
 
 def which(bin_name: str) -> bool:
+    """Check whether ``bin_name`` exists on the user's ``PATH``."""
+    print(f"[debug] Checking for binary: {bin_name}", flush=True)
     from shutil import which as _which
-    return _which(bin_name) is not None
+    found = _which(bin_name) is not None
+    print(f"[debug] Binary {bin_name} found: {found}", flush=True)
+    return found
 
 def sh(cmd: str) -> None:
+    """Execute a shell command and raise if it fails."""
+    print(f"[debug] Preparing to run command: {cmd}", flush=True)
     print(f"[run] {cmd}", flush=True)
     completed = subprocess.run(cmd, shell=True)
+    print(f"[debug] Command finished with return code {completed.returncode}", flush=True)
     if completed.returncode != 0:
         raise RuntimeError(f"Command failed with exit code {completed.returncode}: {cmd}")
 
 def sha256(path: Path) -> str:
+    """Calculate the SHA-256 digest for the file at ``path``."""
+    print(f"[debug] sha256() called with path: {path}", flush=True)
     print(f"[hash] {path}", flush=True)
     h = hashlib.sha256()
     with open(path, "rb") as f:
@@ -53,14 +62,20 @@ def sha256(path: Path) -> str:
             h.update(chunk)
     digest = h.hexdigest()
     print(f"[hash] {path.name} -> {digest}", flush=True)
+    print(f"[debug] sha256() returning digest: {digest}", flush=True)
     return digest
 
 def safe_name(name: str) -> str:
-    return "".join(ch if ch.isalnum() or ch in ("-", "_", ".") else "_" for ch in name)
+    """Return a filesystem-safe version of ``name``."""
+    print(f"[debug] Sanitizing name: {name}", flush=True)
+    sanitized = "".join(ch if ch.isalnum() or ch in ("-", "_", ".") else "_" for ch in name)
+    print(f"[debug] Sanitized name: {sanitized}", flush=True)
+    return sanitized
 
 # --- Profile loading ---
 def load_profile(profile_name: str, profiles_dir: Path) -> dict:
-    """Load profile JSON by name from profiles/ directory. Returns dict."""
+    """Load profile JSON by name from ``profiles_dir``. Returns dict."""
+    print(f"[debug] Loading profile '{profile_name}' from {profiles_dir}", flush=True)
     profile_path = profiles_dir / f"{profile_name}.json"
     if not profile_path.exists():
         raise FileNotFoundError(f"Profile not found: {profile_path}")
@@ -69,22 +84,31 @@ def load_profile(profile_name: str, profiles_dir: Path) -> dict:
     for key in ("name", "metadata_policy", "security_layers"):
         if key not in data:
             raise ValueError(f"Malformed profile (missing {key}): {profile_path}")
+    print(f"[debug] Loaded profile data: {data}", flush=True)
     return data
 
 # === Security Layer Stubs ===
 def sign_with_official_key(package_path: Path):
+    """Stub that simulates signing ``package_path`` with an official key."""
+    print(f"[debug] sign_with_official_key called with {package_path}", flush=True)
     print(f"[stub] Would sign {package_path} with official GPG key here.")
     # TODO: Implement GPG detached signing, store .sig file
 
 def sign_with_user_key(package_path: Path, user_key_path: Path):
+    """Stub that simulates signing ``package_path`` with a user key."""
+    print(f"[debug] sign_with_user_key called with {package_path} and key {user_key_path}", flush=True)
     print(f"[stub] Would sign {package_path} with user GPG key at {user_key_path}.")
     # TODO: Implement GPG detached signing with provided key
 
 def log_package_hash(package_path: Path):
+    """Stub that simulates logging the package hash to a transparency log."""
+    print(f"[debug] log_package_hash called with {package_path}", flush=True)
     print(f"[stub] Would log SHA-256 of {package_path} to transparency log here.")
     # TODO: Implement HTTP POST to transparency log API
 
 def main() -> int:
+    """Command-line entry point for Originals ETL."""
+    print("[debug] Entering main()", flush=True)
     parser = argparse.ArgumentParser(
         description="Create an Original File Package (.zip) for analysis."
     )
@@ -322,6 +346,7 @@ def main() -> int:
 
     print("[done] Originals ETL completed successfully.", flush=True)
     print(f"[output] {zip_path}", flush=True)
+    print("[debug] Exiting main()", flush=True)
     return 0
 
 if __name__ == "__main__":
