@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenOrigin — Download & Verify</title>
+  <style>
+    :root { --navy:#0A1F44; --green:#2EA44F; --gray:#E9EDF5; --dark:#222; --light:#fff; --warn:#B45309; --error:#B91C1C; }
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,'Apple Color Emoji','Segoe UI Emoji';margin:0;background:#fafbfc;color:var(--dark)}
+    header{background:var(--navy);color:var(--light);padding:24px} header h1{margin:0 0 6px 0;font-size:24px} header p{margin:0;opacity:.85}
+    main{max-width:960px;margin:24px auto;padding:0 16px 64px}
+    .card{background:var(--light);border:1px solid var(--gray);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px} label{display:block;font-weight:600;margin:8px 0}
+    input[type=file],input[type=text]{width:100%;padding:10px;border:1px solid #d2d6e1;border-radius:10px}
+    button{background:var(--navy);color:var(--light);border:0;padding:12px 16px;border-radius:10px;cursor:pointer;font-weight:600}
+    button.secondary{background:#111827}.muted{color:#6b7280;font-size:14px}.ok{color:var(--green);font-weight:700}.warn{color:var(--warn);font-weight:700}.err{color:var(--error);font-weight:700}
+    pre{background:#0b1024;color:#d1e5ff;padding:12px;border-radius:10px;overflow:auto;font-size:12px}
+    details summary{cursor:pointer;font-weight:600}.badge{display:inline-block;padding:4px 8px;background:#eef2ff;color:#1e40af;border-radius:8px;font-size:12px;margin-left:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>OpenOrigin — Download & Verify</h1>
+    <p>Verify a shared OpenOrigin package locally in your browser. <span class="badge">No uploads. No tracking.</span></p>
+  </header>
+
+  <main>
+    <div class="card">
+      <p class="muted">All verification happens <strong>locally</strong> in this browser tab using the Web Crypto API. Nothing is uploaded.</p>
+      <p class="muted">Recommended inputs: the <code>*_package.zip</code> you downloaded, an optional detached signature <code>*.sig</code>, and (if verifying signatures) a public key file provided by the creator or project.</p>
+    </div>
+
+    <div class="card">
+      <h2>1) Select Files</h2>
+      <div class="row">
+        <div>
+          <label for="zipInput">OpenOrigin package <code>*_package.zip</code></label>
+          <input id="zipInput" type="file" accept=".zip" />
+        </div>
+        <div>
+          <label for="sigInput">(Optional) Detached signature <code>.sig</code></label>
+          <input id="sigInput" type="file" accept=".sig" />
+        </div>
+      </div>
+      <div class="row" style="margin-top: 12px;">
+        <div>
+          <label for="pubKeyInput">(Optional) Public key for signature verification</label>
+          <input id="pubKeyInput" type="file" accept=".asc,.pgp,.pem,.txt" />
+        </div>
+        <div>
+          <label for="hashInput">(Optional) Transparency log / expected package SHA-256</label>
+          <input id="hashInput" type="text" placeholder="e.g., 6d5f…" />
+        </div>
+      </div>
+      <div style="margin-top: 16px; display: flex; gap: 8px;">
+        <button id="verifyBtn">Verify Package</button>
+        <button class="secondary" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2) Results</h2>
+      <div id="results"></div>
+      <details style="margin-top: 12px;">
+        <summary>Debug console</summary>
+        <pre id="debug"></pre>
+      </details>
+    </div>
+
+    <div class="card">
+      <h3>What this page checks</h3>
+      <ul>
+        <li>That the package contains <code>manifest.json</code>, the delivered media, and <code>metadata_released.json</code>.</li>
+        <li>That the SHA-256 of internal files match the manifest’s recorded hashes.</li>
+        <li>(Optional) That a provided <code>.sig</code> verifies with a provided public key.</li>
+        <li>(Optional) That the computed package hash matches an expected hash (e.g., from a transparency log entry).</li>
+      </ul>
+      <p class="muted">Tip: Some creators may include a public key fingerprint and transparency log URL inside the manifest’s <code>security</code> section.</p>
+    </div>
+
+    <div class="card">
+      <h3>Process (sequence)</h3>
+      <p class="muted">A simple view of the local flow:</p>
+      <pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor User
+  participant Page as Verify Page (This Tab)
+  participant Zip as Package.zip (Local)
+  participant Crypto as WebCrypto API
+
+  User->>Page: Select package.zip (+ optional sig + public key)
+  Page->>Zip: Load entries (no upload)
+  Page->>Page: Parse manifest.json
+  Page->>Crypto: Compute SHA-256 for internal files
+  Crypto-->>Page: Hashes
+  Page->>Page: Compare with manifest values
+  alt Signature provided
+    Page->>Page: Verify detached signature using public key
+  end
+  alt Expected hash provided
+    Page->>Crypto: Compute SHA-256 of package.zip
+    Crypto-->>Page: Package hash
+    Page->>Page: Compare to expected/logged hash
+  end
+  Page-->>User: Show pass/fail for each check
+      </pre>
+    </div>
+
+    <p class="muted">OpenOrigin is local-first. No information you choose to redact is ever sent or stored by this page or the OpenOrigin tool.</p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+  <script>
+    const debugEl = document.getElementById('debug');
+    function logDebug(msg){ console.log(msg); debugEl.textContent += (typeof msg==='string'?msg:JSON.stringify(msg,null,2))+'\n'; }
+    function statusLine(ok,text){ const klass = ok?'ok':'err'; return `<div class="${klass}">• ${text}</div>`; }
+    async function sha256Hex(buffer){ const hash = await crypto.subtle.digest('SHA-256', buffer); return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+    function readAsArrayBuffer(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onerror=()=>rej(r.error); r.onload=()=>res(r.result); r.readAsArrayBuffer(blob); }); }
+    async function ensureOpenPGP(){ if(window.openpgp) return window.openpgp; await import('https://cdn.jsdelivr.net/npm/openpgp@5.11.0/dist/openpgp.min.js'); return window.openpgp; }
+
+    const resultsEl = document.getElementById('results');
+    const zipInput = document.getElementById('zipInput');
+    const sigInput = document.getElementById('sigInput');
+    const pubKeyInput = document.getElementById('pubKeyInput');
+    const hashInput = document.getElementById('hashInput');
+
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      resultsEl.innerHTML=''; debugEl.textContent='';
+      zipInput.value=''; sigInput.value=''; pubKeyInput.value=''; hashInput.value='';
+    });
+
+    document.getElementById('verifyBtn').addEventListener('click', async ()=>{
+      resultsEl.innerHTML=''; debugEl.textContent='';
+      const zipFile = zipInput.files?.[0];
+      if(!zipFile){ resultsEl.innerHTML = statusLine(false,'Please choose a package ZIP first.'); return; }
+
+      try{
+        logDebug('Reading ZIP…');
+        const zipBuf = await readAsArrayBuffer(zipFile);
+        const zip = await JSZip.loadAsync(zipBuf);
+        const entries = Object.keys(zip.files); logDebug({entries});
+
+        if(!zip.files['manifest.json']){ resultsEl.innerHTML += statusLine(false,'manifest.json not found in package.'); return; }
+        const manifestText = await zip.files['manifest.json'].async('string');
+        const manifest = JSON.parse(manifestText); logDebug({manifest}); resultsEl.innerHTML += statusLine(true,'Found manifest.json');
+
+        const deliveredName = manifest?.delivered_file;
+        const metaName = 'metadata_released.json';
+        let okStructure = true;
+        if(!deliveredName || !zip.files[deliveredName]){ resultsEl.innerHTML += statusLine(false,`Delivered file missing: ${deliveredName||'(unspecified)'}`); okStructure=false; }
+        else { resultsEl.innerHTML += statusLine(true,`Found delivered file: ${deliveredName}`); }
+        if(!zip.files[metaName]){ resultsEl.innerHTML += statusLine(false,'metadata_released.json missing'); okStructure=false; }
+        else { resultsEl.innerHTML += statusLine(true,'Found metadata_released.json'); }
+        if(!okStructure) return;
+
+        const deliveredBuf = await zip.files[deliveredName].async('arraybuffer');
+        const metaBuf = await zip.files[metaName].async('arraybuffer');
+        const deliveredHash = await sha256Hex(deliveredBuf);
+        const metaHash = await sha256Hex(metaBuf); logDebug({deliveredHash,metaHash});
+
+        const expDelivered = manifest?.hashes?.delivered_sha256?.toLowerCase?.();
+        const expMeta = manifest?.hashes?.metadata_released_sha256?.toLowerCase?.();
+        const deliveredOK = (!!expDelivered && deliveredHash===expDelivered);
+        const metaOK = (!!expMeta && metaHash===expMeta);
+        resultsEl.innerHTML += statusLine(deliveredOK, `Delivered file hash ${deliveredOK?'matches':'does not match'} manifest`);
+        resultsEl.innerHTML += statusLine(metaOK, `Metadata file hash ${metaOK?'matches':'does not match'} manifest`);
+
+        const expectedPkgHash = (hashInput.value||'').trim().toLowerCase();
+        if(expectedPkgHash){
+          const pkgHash = await sha256Hex(zipBuf);
+          const pkgOK = pkgHash===expectedPkgHash;
+          resultsEl.innerHTML += statusLine(pkgOK, `Package SHA-256 ${pkgOK?'matches':'does not match'} expected value`);
+          logDebug({pkgHash,expectedPkgHash});
+        }
+
+        const sigFile = sigInput.files?.[0];
+        const pubKeyFile = pubKeyInput.files?.[0];
+        if(sigFile && pubKeyFile){
+          try{
+            const openpgp = await ensureOpenPGP();
+            const pubArmored = await pubKeyFile.text();
+            const sigBytes = await sigFile.arrayBuffer();
+            const message = await openpgp.createMessage({ binary: new Uint8Array(zipBuf) });
+            const signature = await openpgp.readSignature({ binarySignature: new Uint8Array(sigBytes) });
+            const keys = await openpgp.readKey({ armoredKey: pubArmored });
+            const verification = await openpgp.verify({ message, signature, verificationKeys: keys });
+            const sigOK = verification.signatures[0]?.verified;
+            const good = typeof sigOK==='function' ? await sigOK : false;
+            resultsEl.innerHTML += statusLine(!!good, `Detached signature verification ${good?'passed':'failed'}`);
+          }catch(e){ logDebug(e); resultsEl.innerHTML += statusLine(false,'Signature verification failed to run (see console).'); }
+        } else if (sigFile || pubKeyFile){
+          resultsEl.innerHTML += statusLine(false,'To verify a signature, provide BOTH a .sig and a public key.');
+        }
+
+        const allGood = [...document.querySelectorAll('#results .err')].length===0;
+        resultsEl.innerHTML += `<hr/><div><strong>${allGood?'All selected checks passed.':'Some checks failed. Review the details above.'}</strong></div>`;
+      }catch(err){ logDebug(err); resultsEl.innerHTML += statusLine(false,'Unexpected error during verification. See debug console below.'); }
+    });
+  </script>
+</body>
+</html>
