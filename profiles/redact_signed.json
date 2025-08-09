@@ -1,0 +1,10 @@
+{
+  "name": "redact_signed",
+  "description": "Same as redact. Enable official signing.",
+  "metadata_policy": "safe_defaults",
+  "security_layers": {
+    "sign_official": true,
+    "sign_user": false,
+    "log_hash": false
+  }
+}

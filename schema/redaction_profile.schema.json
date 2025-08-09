@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "profile_name": { "type": "string" },
+    "description": { "type": "string" },
+    "remove_tags": { "type": "array", "items": { "type": "string" } },
+    "coarsen_time": { "type": "string", "enum": ["none", "date"] }
+  },
+  "required": ["profile_name", "remove_tags"]
+}

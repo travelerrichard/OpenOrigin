@@ -1,0 +1,10 @@
+{
+  "name": "preserve",
+  "description": "Keep all metadata. No security layers enabled.",
+  "metadata_policy": "keep_all",
+  "security_layers": {
+    "sign_official": false,
+    "sign_user": false,
+    "log_hash": false
+  }
+}
