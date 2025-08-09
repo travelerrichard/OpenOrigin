@@ -76,6 +76,28 @@ Create an **Original File Package** (`*_package.zip`) for analysis:
 - `manifest.json` with actions taken
 - **Profiles** now include optional security layers (signing, logging)
 
+# Project Status: Pre-release / Not Yet Functional
+
+As of today, this repository contains **initial code, prototypes, and documentation drafts** only.  
+**There is no functional, stable release**.
+
+## What this means
+- The CLI, verifier, and profiles are under development.
+- Security layer features are incomplete.
+- No guarantees of correctness or stability.
+- File formats, manifests, and metadata policies may change without notice.
+
+## Intended next steps
+1. Complete functional CLI with profile selection and security options.
+2. Finalize verification page for reproducible validation.
+3. Internal testing with sample files.
+4. Public 0.1.0 release.
+
+## Guidance for contributors
+- Contributions are welcome, but expect rapid changes.
+- Use feature branches and PRs as per CONTRIBUTING.md.
+- Avoid tagging `v*` releases until maintainers announce readiness.
+
 ## Quick start
 ```bash
 cd originals-etl/cli
